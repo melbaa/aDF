@@ -23,6 +23,7 @@ gui_chantbl = {
  }
 
 local last_target_change_time = GetTime()
+local last_debuffs = {}
 
 -- translation table for debuff check on target
 
@@ -64,6 +65,11 @@ aDFDebuffs = {
 	--["Vampiric Embrace"] = "Interface\\Icons\\Spell_Shadow_UnsummonBuilding",
 	--["Crystal Yield"] = "Interface\\Icons\\INV_Misc_Gem_Amethyst_01",
 	--["Elemental Vulnerability"] = "Interface\\Icons\\Spell_Holy_Dizzy",
+
+for k,v in pairs(aDFDebuffs) do
+	last_debuffs[k] = 0
+end
+
 
 aDFArmorVals = {
 	[90]   = "Sunder Armor x1", -- r1 x1
@@ -290,19 +296,15 @@ function aDF:Update()
 --		aDF.armor:SetText(UnitResistance(aDF_target,0).." ["..math.floor(((UnitResistance(aDF_target,0) / (467.5 * UnitLevel("player") + UnitResistance(aDF_target,0) - 22167.5)) * 100),1).."%]")
 		aDF.armor:SetText(armorcurr)
 		-- adfprint(string.format('aDF_target %s targetname %s armorcurr %s armorprev %s', aDF_target, UnitName(aDF_target), armorcurr, aDF_armorprev))
+		local armormsg = ''
 		if armorcurr > aDF_armorprev then
 			local armordiff = armorcurr - aDF_armorprev
 			local diffreason = ""
 			if aDF_armorprev ~= 0 and aDFArmorVals[armordiff] then
 				diffreason = " Likely dropped " .. aDFArmorVals[armordiff]
 			end
-			local msg = UnitName(aDF_target).."'s armor has risen "..aDF_armorprev.." -> "..armorcurr.."."..diffreason
-			-- adfprint(msg)
-			if aDF_target == 'target' then
-				-- targettarget does not trigger events when it changes. this means it's hard to tell apart units with the same name, so we don't allow notifications for it
-				SendChatMessage(msg, gui_chan)
-			end
-
+			armormsg = "armor "..aDF_armorprev.." -> "..armorcurr.."."
+			-- adfprint(armormsg)
 		end
 		aDF_armorprev = armorcurr
 
@@ -311,17 +313,43 @@ function aDF:Update()
 		else
 			aDF.res:SetText("")
 		end
+
+		local debuffmsg = ' '
 		for i,v in pairs(guiOptions) do
-			if aDF:GetDebuff(aDF_target,aDFSpells[i]) then
+			local stacks = aDF:GetDebuff(aDF_target,aDFSpells[i], 1)
+			-- adfprint(string.format("spell %s stacks %s", aDFSpells[i], stacks))
+			if stacks > 0 then
 				aDF_frames[i]["icon"]:SetAlpha(1)
-				if aDF:GetDebuff(aDF_target,aDFSpells[i],1) > 1 then
-					aDF_frames[i]["nr"]:SetText(aDF:GetDebuff(aDF_target,aDFSpells[i],1))
+				if stacks > 1 then
+					aDF_frames[i]["nr"]:SetText(stacks)
 				end
 			else
 				aDF_frames[i]["icon"]:SetAlpha(0.3)
 				aDF_frames[i]["nr"]:SetText("")
-			end		
+			end
+
+			if stacks == 0 and last_debuffs[i] > 0 then
+				if last_debuffs[i] > 1 then
+					debuffmsg = debuffmsg .. last_debuffs[i] .. 'x ' .. i .. ' '
+				else
+					debuffmsg = debuffmsg .. ' ' .. i .. ' '
+				end
+				last_debuffs[i] = 0
+			end
+			if stacks > 0 then
+				last_debuffs[i] = stacks
+			end
 		end
+
+		if aDF_target == 'target' and armormsg ~= '' then
+			-- targettarget does not trigger events when it changes. this means it's hard to tell apart units with the same name, so we don't allow notifications for it
+			local announcemsg = UnitName(aDF_target).." "..armormsg
+			if debuffmsg ~= ' ' then
+				announcemsg = announcemsg .. ' lost ' .. debuffmsg
+			end
+			SendChatMessage(announcemsg, gui_chan)
+		end
+
 	else
 		aDF.armor:SetText("")
 		aDF.res:SetText("")
@@ -491,8 +519,8 @@ function aDF.Options:Gui()
 			info.text = v
 			info.value = v
 			info.func = function()
-			UIDropDownMenu_SetSelectedValue(chandropdown, this.value)
-			gui_chan = UIDropDownMenu_GetText(chandropdown)
+				UIDropDownMenu_SetSelectedValue(chandropdown, this.value)
+				gui_chan = UIDropDownMenu_GetText(chandropdown)
 			end
 			info.checked = nil
 			UIDropDownMenu_AddButton(info, 1)
@@ -522,21 +550,26 @@ end
 function aDF:GetDebuff(name,buff,stacks)
 	local a=1
 	while UnitDebuff(name,a) do
-		local _, s = UnitDebuff(name,a)
+		local debuffname, s = UnitDebuff(name,a)
 		aDF_tooltip:SetOwner(UIParent, "ANCHOR_NONE");
 		aDF_tooltip:ClearLines()
 		aDF_tooltip:SetUnitDebuff(name,a)
 		local aDFtext = aDF_tooltipTextL:GetText()
-		if string.find(aDFtext,buff) then 
+		-- adfprint(string.format("name %s stacks %s", debuffname, s))
+		if string.find(aDFtext,buff) then
 			if stacks == 1 then
 				return s
 			else
-				return true 
+				return true
 			end
 		end
 		a=a+1
 	end
-	return false
+	if stacks == 1 then
+		return 0
+	else
+		return false
+	end
 end
 
 -- event function, will load the frames we need
