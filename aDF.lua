@@ -1,6 +1,8 @@
 --########### armor and Debuff Frame
 --########### By Atreyyo @ Vanillagaming.org
 
+libdebuff = nil
+
 aDF = CreateFrame('Button', "aDF", UIParent); -- Event Frame
 aDF.Options = CreateFrame("Frame",nil,UIParent) -- Options frame
 
@@ -87,18 +89,25 @@ aDFArmorVals = {
 	[1800] = "Sunder Armor",    -- r5 x4, or r4 x5
 	[2250] = "Sunder Armor x5", -- r5 x5
 	[2550] = "Improved Expose Armor",
+
+	[725]  = "Untalented Expose Armor",
+	[1050] = "Untalented Expose Armor",
+	[1375] = "Untalented Expose Armor",
 	[1700] = "Untalented Expose Armor",
+
 	[505]  = "Faerie Fire",
-	[395]  = "Faerie Fire",
-	[285]  = "Faerie Fire",
-	[175]  = "Faerie Fire",
+	[395]  = "Faerie Fire R3",
+	[285]  = "Faerie Fire R2",
+	[175]  = "Faerie Fire R1",
+
 	[640]  = "Curse of Recklessness",
-	[465]  = "Curse of Recklessness",
-	[290]  = "Curse of Recklessness",
-	[140]  = "Curse of Recklessness",
+	[465]  = "Curse of Recklessness R3",
+	[290]  = "Curse of Recklessness R2",
+	[140]  = "Curse of Recklessness R1",
 	[600]  = "Annihilator x3",
 	[400]  = "Annihilator x2",
 	[200]  = "Annihilator x1",
+	[50]   = "Torch of Holy Flame",
 }
 
 function aDF_Default()
@@ -294,14 +303,17 @@ function aDF:Update()
 		end
 		local armorcurr = UnitResistance(aDF_target,0)
 --		aDF.armor:SetText(UnitResistance(aDF_target,0).." ["..math.floor(((UnitResistance(aDF_target,0) / (467.5 * UnitLevel("player") + UnitResistance(aDF_target,0) - 22167.5)) * 100),1).."%]")
-		aDF.armor:SetText(armorcurr)
+		local mainSpeed, offSpeed = UnitAttackSpeed(aDF_target)
+        mainSpeed = round(mainSpeed, 1)
+        offSpeed = round(offSpeed, 1)
+		aDF.armor:SetText(armorcurr .. '-' .. tostring(mainSpeed) .. '-' .. tostring(offSpeed))
 		-- adfprint(string.format('aDF_target %s targetname %s armorcurr %s armorprev %s', aDF_target, UnitName(aDF_target), armorcurr, aDF_armorprev))
 		local armormsg = ''
+        local likelyreason = ""
 		if armorcurr > aDF_armorprev then
 			local armordiff = armorcurr - aDF_armorprev
-			local diffreason = ""
 			if aDF_armorprev ~= 0 and aDFArmorVals[armordiff] then
-				diffreason = " Likely dropped " .. aDFArmorVals[armordiff]
+				likelyreason = "Likely dropped " .. aDFArmorVals[armordiff]
 			end
 			armormsg = "armor "..aDF_armorprev.." -> "..armorcurr.."."
 			-- adfprint(armormsg)
@@ -314,10 +326,24 @@ function aDF:Update()
 			aDF.res:SetText("")
 		end
 
+
+
+	
+		local active_debuffs = {}
+		for id=1, 32 do
+			local name, rank, texture, stacks, dtype, duration, timeleft = libdebuff:UnitDebuff(aDF_target, id)
+			if name and texture then
+				active_debuffs[name] = stacks
+				--adfprint(string.format("active %s %s", name, stacks))
+			end
+		end
+
+
 		local debuffmsg = ' '
 		for i,v in pairs(guiOptions) do
-			local stacks = aDF:GetDebuff(aDF_target,aDFSpells[i], 1)
-			-- adfprint(string.format("spell %s stacks %s", aDFSpells[i], stacks))
+			-- local stacks = aDF:GetDebuff(aDF_target,aDFSpells[i], 1)
+			local stacks = active_debuffs[aDFSpells[i]] or 0
+			--adfprint(string.format("spell %s stacks %s", aDFSpells[i], stacks))
 			if stacks > 0 then
 				aDF_frames[i]["icon"]:SetAlpha(1)
 				if stacks > 1 then
@@ -346,8 +372,11 @@ function aDF:Update()
 			local announcemsg = UnitName(aDF_target).." "..armormsg
 			if debuffmsg ~= ' ' then
 				announcemsg = announcemsg .. ' lost ' .. debuffmsg
+                SendChatMessage(announcemsg, gui_chan)
+            elseif likelyreason ~= '' then
+                announcemsg = announcemsg .. ' ' .. likelyreason
+                SendChatMessage(announcemsg, gui_chan)
 			end
-			SendChatMessage(announcemsg, gui_chan)
 		end
 
 	else
@@ -587,7 +616,13 @@ function aDF:OnEvent()
 		DEFAULT_CHAT_FRAME:AddMessage("|cFFF5F54A aDF:|r type |cFFFFFF00 /adf show|r to show frame",1,1,1)
 		DEFAULT_CHAT_FRAME:AddMessage("|cFFF5F54A aDF:|r type |cFFFFFF00 /adf hide|r to hide frame",1,1,1)
 		DEFAULT_CHAT_FRAME:AddMessage("|cFFF5F54A aDF:|r type |cFFFFFF00 /adf options|r for options frame",1,1,1)
+
 	end
+	if event == "ADDON_LOADED" and arg1 == 'pfUI' then
+		libdebuff = pfUI.api.libdebuff
+        round = pfUI.api.round
+	end
+
 	if event == "UNIT_AURA" then
 		aDF:Update()
 	end
@@ -601,8 +636,9 @@ function aDF:OnEvent()
 			aDF_target = "target"
 		end
 		aDF_armorprev = 30000
-		-- adfprint('PLAYER_TARGET_CHANGED ' .. tostring(aDF_target))
 		aDF:Update()
+
+
 	end
 end
 
