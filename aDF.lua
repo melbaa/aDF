@@ -73,42 +73,154 @@ for k,v in pairs(aDFDebuffs) do
 end
 
 
-aDFArmorVals = {
-	[90]   = "Sunder Armor x1", -- r1 x1
-	[180]  = "Sunder Armor",    -- r2 x1, or r1 x2
-	[270]  = "Sunder Armor",    -- r3 x1, or r1 x3
-	[540]  = "Sunder Armor",    -- r3 x2, or r2 x3
-	[810]  = "Sunder Armor x3", -- r3 x3
-	[360]  = "Sunder Armor",    -- r4 x1, or r1 x4 or r2 x2
-	[720]  = "Sunder Armor",    -- r4 x2, or r2 x4
-	[1080] = "Sunder Armor",    -- r4 x3, or r3 x4
-	[1440] = "Sunder Armor x4", -- r4 x4
-	[450]  = "Sunder Armor",    -- r5 x1, or r1 x5
-	[900]  = "Sunder Armor",    -- r5 x2, or r2 x5
-	[1350] = "Sunder Armor",    -- r5 x3, or r3 x5
-	[1800] = "Sunder Armor",    -- r5 x4, or r4 x5
-	[2250] = "Sunder Armor x5", -- r5 x5
-	[2550] = "Improved Expose Armor",
+aDFArmorVals = {}
 
-	[725]  = "Untalented Expose Armor",
-	[1050] = "Untalented Expose Armor",
-	[1375] = "Untalented Expose Armor",
-	[1700] = "Untalented Expose Armor",
 
-	[505]  = "Faerie Fire",
-	[395]  = "Faerie Fire R3",
-	[285]  = "Faerie Fire R2",
-	[175]  = "Faerie Fire R1",
 
-	[640]  = "Curse of Recklessness",
-	[465]  = "Curse of Recklessness R3",
-	[290]  = "Curse of Recklessness R2",
-	[140]  = "Curse of Recklessness R1",
-	[600]  = "Annihilator x3",
-	[400]  = "Annihilator x2",
-	[200]  = "Annihilator x1",
-	[50]   = "Torch of Holy Flame",
+local armor_candidates = {
+
+    {80, "Untalented Expose Armor r1c1"},
+    {100, "Improved Expose Armor r1c1t1"},
+    {120, "Improved Expose Armor r1c1t2"},
+    {160, "Untalented Expose Armor r1c2"},
+    {200, "Improved Expose Armor r1c2t1"},
+    {240, "Improved Expose Armor r1c2t2"},
+    {240, "Untalented Expose Armor r1c3"},
+    {300, "Improved Expose Armor r1c3t1"},
+    {360, "Improved Expose Armor r1c3t2"},
+    {320, "Untalented Expose Armor r1c4"},
+    {400, "Improved Expose Armor r1c4t1"},
+    {480, "Improved Expose Armor r1c4t2"},
+    {400, "Untalented Expose Armor r1c5"},
+    {500, "Improved Expose Armor r1c5t1"},
+    {600, "Improved Expose Armor r1c5t2"},
+    {145, "Untalented Expose Armor r2c1"},
+    {182, "Improved Expose Armor r2c1t1"},
+    {181, "Improved Exposed Armor r2c1t1"},
+    {218, "Improved Expose Armor r2c1t2"},
+    {217, "Improved Exposed Armor r2c1t2"},
+    {290, "Untalented Expose Armor r2c2"},
+    {363, "Improved Expose Armor r2c2t1"},
+    {362, "Improved Exposed Armor r2c2t1"},
+    {435, "Improved Expose Armor r2c2t2"},
+    {435, "Untalented Expose Armor r2c3"},
+    {544, "Improved Expose Armor r2c3t1"},
+    {543, "Improved Exposed Armor r2c3t1"},
+    {653, "Improved Expose Armor r2c3t2"},
+    {652, "Improved Exposed Armor r2c3t2"},
+    {580, "Untalented Expose Armor r2c4"},
+    {725, "Improved Expose Armor r2c4t1"},
+    {870, "Improved Expose Armor r2c4t2"},
+    {725, "Untalented Expose Armor r2c5"},
+    {907, "Improved Expose Armor r2c5t1"},
+    {906, "Improved Exposed Armor r2c5t1"},
+    {1088, "Improved Expose Armor r2c5t2"},
+    {1087, "Improved Exposed Armor r2c5t2"},
+    {210, "Untalented Expose Armor r3c1"},
+    {263, "Improved Expose Armor r3c1t1"},
+    {262, "Improved Exposed Armor r3c1t1"},
+    {315, "Improved Expose Armor r3c1t2"},
+    {420, "Untalented Expose Armor r3c2"},
+    {525, "Improved Expose Armor r3c2t1"},
+    {630, "Improved Expose Armor r3c2t2"},
+    {630, "Untalented Expose Armor r3c3"},
+    {788, "Improved Expose Armor r3c3t1"},
+    {787, "Improved Exposed Armor r3c3t1"},
+    {945, "Improved Expose Armor r3c3t2"},
+    {840, "Untalented Expose Armor r3c4"},
+    {1050, "Improved Expose Armor r3c4t1"},
+    {1260, "Improved Expose Armor r3c4t2"},
+    {1050, "Untalented Expose Armor r3c5"},
+    {1313, "Improved Expose Armor r3c5t1"},
+    {1312, "Improved Exposed Armor r3c5t1"},
+    {1575, "Improved Expose Armor r3c5t2"},
+    {275, "Untalented Expose Armor r4c1"},
+    {344, "Improved Expose Armor r4c1t1"},
+    {343, "Improved Exposed Armor r4c1t1"},
+    {413, "Improved Expose Armor r4c1t2"},
+    {412, "Improved Exposed Armor r4c1t2"},
+    {550, "Untalented Expose Armor r4c2"},
+    {688, "Improved Expose Armor r4c2t1"},
+    {687, "Improved Exposed Armor r4c2t1"},
+    {825, "Improved Expose Armor r4c2t2"},
+    {825, "Untalented Expose Armor r4c3"},
+    {1032, "Improved Expose Armor r4c3t1"},
+    {1031, "Improved Exposed Armor r4c3t1"},
+    {1238, "Improved Expose Armor r4c3t2"},
+    {1237, "Improved Exposed Armor r4c3t2"},
+    {1100, "Untalented Expose Armor r4c4"},
+    {1375, "Improved Expose Armor r4c4t1"},
+    {1650, "Improved Expose Armor r4c4t2"},
+    {1375, "Untalented Expose Armor r4c5"},
+    {1719, "Improved Expose Armor r4c5t1"},
+    {1718, "Improved Exposed Armor r4c5t1"},
+    {2063, "Improved Expose Armor r4c5t2"},
+    {2062, "Improved Exposed Armor r4c5t2"},
+    {340, "Untalented Expose Armor r5c1"},
+    {425, "Improved Expose Armor r5c1t1"},
+    {510, "Improved Expose Armor r5c1t2"},
+    {680, "Untalented Expose Armor r5c2"},
+    {850, "Improved Expose Armor r5c2t1"},
+    {1020, "Improved Expose Armor r5c2t2"},
+    {1020, "Untalented Expose Armor r5c3"},
+    {1275, "Improved Expose Armor r5c3t1"},
+    {1530, "Improved Expose Armor r5c3t2"},
+    {1360, "Untalented Expose Armor r5c4"},
+    {1700, "Improved Expose Armor r5c4t1"},
+    {2040, "Improved Expose Armor r5c4t2"},
+    {1700, "Untalented Expose Armor"}, -- r5c5
+    {2125, "Improved Expose Armor r5c5t1"},
+    {2550, "Improved Expose Armor"}, -- r5c5t2
+
+
+    {90, "Sunder Armor x1"}, -- r1 x1
+    {180, "Sunder Armor"},    -- r2 x1, or r1 x2
+    {270,   "Sunder Armor"},    -- r3 x1, or r1 x3
+	{540,   "Sunder Armor"},    -- r3 x2, or r2 x3
+	{810,   "Sunder Armor x3"}, -- r3 x3
+	{360,   "Sunder Armor"},    -- r4 x1, or r1 x4 or r2 x2
+	{720,   "Sunder Armor"},    -- r4 x2, or r2 x4
+	{1080,  "Sunder Armor"},    -- r4 x3, or r3 x4
+	{1440,  "Sunder Armor x4"}, -- r4 x4
+	{450,   "Sunder Armor"},    -- r5 x1, or r1 x5
+	{900,   "Sunder Armor"},    -- r5 x2, or r2 x5
+	{1350,  "Sunder Armor"},    -- r5 x3, or r3 x5
+	{1800,  "Sunder Armor"},    -- r5 x4, or r4 x5
+	{2250,  "Sunder Armor x5"}, -- r5 x5
+
+
+
+	{505,   "Faerie Fire"},
+	{395,   "Faerie Fire R3"},
+	{285,   "Faerie Fire R2"},
+	{175,   "Faerie Fire R1"},
+
+	{640,   "Curse of Recklessness"},
+	{465,   "Curse of Recklessness R3"},
+	{290,   "Curse of Recklessness R2"},
+	{140,   "Curse of Recklessness R1"},
+	{600,   "Annihilator/Rivenspike x3"},
+	{400,   "Annihilator/Rivenspike x2"},
+	{200,   "Annihilator/Rivenspike x1"},
+	{50,   "Torch of Holy Flame"},
 }
+
+for _, tpl in ipairs(armor_candidates) do
+    local armor = tpl[1]
+    local announcement = tpl[2]
+
+    --[[
+    -- prints everything in a tie, but some are too unlikely to be useful
+    if aDFArmorVals[armor] == nil then
+        aDFArmorVals[armor] = announcement
+    else
+        aDFArmorVals[armor] = aDFArmorVals[armor] .. '/' .. announcement
+    end
+    ]]
+
+    -- assume the candidates are ordered from least to most likely, so last one wins ties
+    aDFArmorVals[armor] = announcement
+end
 
 function aDF_Default()
 	if guiOptions == nil then
