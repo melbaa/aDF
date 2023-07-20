@@ -199,9 +199,9 @@ local armor_candidates = {
 	{465,   "Curse of Recklessness R3"},
 	{290,   "Curse of Recklessness R2"},
 	{140,   "Curse of Recklessness R1"},
-	{600,   "Annihilator/Rivenspike x3"},
-	{400,   "Annihilator/Rivenspike x2"},
-	{200,   "Annihilator/Rivenspike x1"},
+	{600,   "Annihilator x3"}, -- or rivenspike
+	{400,   "Annihilator x2"}, -- or rivenspike
+	{200,   "Annihilator x1"}, -- or rivenspike
 	{50,   "Torch of Holy Flame"},
 }
 
@@ -448,15 +448,18 @@ function aDF:Update()
 			armormsg = "armor "..aDF_armorprev.." -> "..armorcurr.."."
 			-- adfprint(armormsg)
 		end
-        if apcurr > aDF_apprev then
+        if aDF_apprev ~= 0 and apcurr > aDF_apprev then
             local apdiff = apcurr - aDF_apprev
             local apmsg = UnitName(aDF_target) .. ' AP ' .. aDF_apprev .. ' -> ' .. apcurr .. '.'
 			if aDFAttackpowerVals[apdiff] then
                 apmsg = apmsg .. ' lost ' .. aDFAttackpowerVals[apdiff]
 			end
             if apdiff > 130 then
+                -- ignores announcements on players
                 -- only announces attack power changes if it's from a max rank demo shout/roar, ignores other effects like Screech and that engineering trinket.
-                SendChatMessage(apmsg, gui_chan)
+                if not UnitIsPlayer(aDF_target) then
+                    SendChatMessage(apmsg, gui_chan)
+                end
             else
                 adfprint(apmsg)
             end
@@ -780,6 +783,7 @@ function aDF:OnEvent()
 		if UnitCanAttack("player", "target") then
 			aDF_target = "target"
 		end
+
 		aDF_armorprev = 30000
         aDF_apprev = 30000
 		aDF:Update()
