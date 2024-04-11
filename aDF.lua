@@ -435,8 +435,8 @@ function aDF:Update()
 --		aDF.armor:SetText(UnitResistance(aDF_target,0).." ["..math.floor(((UnitResistance(aDF_target,0) / (467.5 * UnitLevel("player") + UnitResistance(aDF_target,0) - 22167.5)) * 100),1).."%]")
 		local mainSpeed, offSpeed = UnitAttackSpeed(aDF_target)
         mainSpeed = round(mainSpeed, 1)
-        offSpeed = round(offSpeed, 1)
-		aDF.armor:SetText(armorcurr .. '-' .. tostring(mainSpeed) .. '-' .. tostring(offSpeed) .. '-' .. tostring(apcurr))
+        --offSpeed = round(offSpeed, 1)
+		aDF.armor:SetText(armorcurr .. '-' .. tostring(mainSpeed) .. '-' .. tostring(apcurr))
 		-- adfprint(string.format('aDF_target %s targetname %s armorcurr %s armorprev %s', aDF_target, UnitName(aDF_target), armorcurr, aDF_armorprev))
 		local armormsg = ''
         local likelyreason = ""
@@ -451,16 +451,15 @@ function aDF:Update()
         if aDF_apprev ~= 0 and apcurr > aDF_apprev then
             local apdiff = apcurr - aDF_apprev
             local apmsg = UnitName(aDF_target) .. ' AP ' .. aDF_apprev .. ' -> ' .. apcurr .. '.'
-			if aDFAttackpowerVals[apdiff] then
+
+			if aDFAttackpowerVals[apdiff] -- known debuffs
+            and apdiff > 130 -- of a relevant size
+            and not UnitIsPlayer(aDF_target) -- ignore players
+            then
                 apmsg = apmsg .. ' lost ' .. aDFAttackpowerVals[apdiff]
-			end
-            if apdiff > 130 then
-                -- ignores announcements on players
-                -- only announces attack power changes if it's from a max rank demo shout/roar, ignores other effects like Screech and that engineering trinket.
-                if not UnitIsPlayer(aDF_target) then
-                    SendChatMessage(apmsg, gui_chan)
-                end
+                SendChatMessage(apmsg, gui_chan)
             else
+                -- other effects like Screech and that engineering trinket.
                 adfprint(apmsg)
             end
 		end
